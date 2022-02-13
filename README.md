@@ -8,10 +8,12 @@ A simple demo of consistent hashing.
 
 These features have been implemented:
 
--   Core consistent-hashing-algorithm
--   Consistent Hashing with Bounded Loads, according to [Consistent Hashing with Bounded Loads](http://ai.googleblog.com/2017/04/consistent-hashing-with-bounded-loads.html)
--   A simple load-balance proxy demo
--   A full demo to show how consistent-hashing-algorithm works
+- Core consistent-hashing-algorithm
+- Consistent Hashing with Bounded Loads, according to [Consistent Hashing with Bounded Loads](http://ai.googleblog.com/2017/04/consistent-hashing-with-bounded-loads.html)
+- Customize hash function support
+- Customize replica number on hash ring support
+- A simple load-balance proxy demo
+- A full demo to show how consistent-hashing-algorithm works
 
 <br/>
 
