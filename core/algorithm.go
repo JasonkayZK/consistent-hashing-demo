@@ -13,6 +13,11 @@ import (
 	"sync"
 )
 
+const (
+	// The format of the host replica name
+	hostReplicaFormat = `%s%d`
+)
+
 var (
 	// the default number of replicas
 	defaultReplicaNum = 10
@@ -36,7 +41,7 @@ type Consistent struct {
 	hostMap map[string]*Host
 
 	// the map of hashed virtual nodes to host name
-	loadMap map[uint64]string
+	replicaHostMap map[uint64]string
 
 	// the hash ring
 	sortedHostsHashSet []uint64
@@ -58,6 +63,7 @@ func NewConsistent(replicaNum int, hashFunc func(key string) uint64) *Consistent
 		replicaNum:         replicaNum,
 		hashFunc:           hashFunc,
 		hostMap:            make(map[string]*Host),
+		replicaHostMap:     make(map[uint64]string),
 		sortedHostsHashSet: make([]uint64, 0),
 	}
 }
@@ -76,8 +82,8 @@ func (c *Consistent) RegisterHost(hostName string) error {
 	}
 
 	for i := 0; i < c.replicaNum; i++ {
-		hashedIdx := c.hashFunc(fmt.Sprintf("%s#%d", hostName, i))
-		c.loadMap[hashedIdx] = hostName
+		hashedIdx := c.hashFunc(fmt.Sprintf(hostReplicaFormat, hostName, i))
+		c.replicaHostMap[hashedIdx] = hostName
 		c.sortedHostsHashSet = append(c.sortedHostsHashSet, hashedIdx)
 	}
 
@@ -92,10 +98,41 @@ func (c *Consistent) RegisterHost(hostName string) error {
 	return nil
 }
 
+func (c *Consistent) UnregisterHost(hostName string) error {
+	c.Lock()
+	defer c.Unlock()
+
+	if _, ok := c.hostMap[hostName]; !ok {
+		return ErrHostNotFound
+	}
+
+	delete(c.hostMap, hostName)
+
+	for i := 0; i < c.replicaNum; i++ {
+		hashedIdx := c.hashFunc(fmt.Sprintf(hostReplicaFormat, hostName, i))
+		delete(c.replicaHostMap, hashedIdx)
+		c.delHashIndex(hashedIdx)
+	}
+
+	return nil
+}
+
+// Hosts Return the list of real hosts
+func (c *Consistent) Hosts() []string {
+	c.RLock()
+	defer c.RUnlock()
+
+	hosts := make([]string, 0)
+	for k, _ := range c.hostMap {
+		hosts = append(hosts, k)
+	}
+	return hosts
+}
+
 func (c *Consistent) GetKey(key string) (string, error) {
 	hashedKey := c.hashFunc(key)
 	idx := c.searchKey(hashedKey)
-	return c.hashFunc[c.sortedHostsHashSet[idx]], nil
+	return c.replicaHostMap[c.sortedHostsHashSet[idx]], nil
 }
 
 func (c *Consistent) searchKey(key uint64) int {
@@ -109,33 +146,6 @@ func (c *Consistent) searchKey(key uint64) int {
 	}
 
 	return idx
-}
-
-func (c *Consistent) UnregisterHost(hostName string) error {
-	c.Lock()
-	defer c.Unlock()
-
-	if _, ok := c.hostMap[hostName]; !ok {
-		return ErrHostNotFound
-	}
-
-	delete(c.hostMap, hostName)
-
-	for i := 0; i < c.replicaNum; i++ {
-		hashedIdx := c.hashFunc(fmt.Sprintf("%s#%d", hostName, i))
-		delete(c.loadMap, hashedIdx)
-		c.delHashIndex(hashedIdx)
-	}
-
-	// sort hashes in ascending order
-	sort.Slice(c.sortedHostsHashSet, func(i int, j int) bool {
-		if c.sortedHostsHashSet[i] < c.sortedHostsHashSet[j] {
-			return true
-		}
-		return false
-	})
-
-	return nil
 }
 
 // Remove hashed host index from the hash ring
