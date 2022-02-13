@@ -123,7 +123,7 @@ func (c *Consistent) Hosts() []string {
 	defer c.RUnlock()
 
 	hosts := make([]string, 0)
-	for k, _ := range c.hostMap {
+	for k := range c.hostMap {
 		hosts = append(hosts, k)
 	}
 	return hosts
