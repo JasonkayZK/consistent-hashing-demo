@@ -5,5 +5,5 @@ type Host struct {
 	Name string
 
 	// the load bound of the host
-	LoadBound uint64
+	LoadBound int64
 }

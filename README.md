@@ -105,6 +105,63 @@ Response from host localhost:8082: hello: 032452345
 
 <br/>
 
+### **Step 4: Consistent Hash with Load Bound Test**
+
+You can request for `localhost:18888/key_least` for Load Bound testing:
+
+```bash
+$ curl localhost:18888/key_least?key=123
+key: 123, val: hello: 123
+```
+
+the result is shown below:
+
+```
+start proxy server: 18888
+register host: localhost:8080 success
+register host: localhost:8081 success
+register host: localhost:8082 success
+
+Response from host localhost:8080: hello: 123
+Response from host localhost:8080: hello: 123
+Response from host localhost:8082: hello: 123
+Response from host localhost:8082: hello: 123
+Response from host localhost:8081: hello: 123
+Response from host localhost:8080: hello: 123
+Response from host localhost:8082: hello: 123
+Response from host localhost:8081: hello: 123
+Response from host localhost:8080: hello: 123
+Response from host localhost:8082: hello: 123
+Response from host localhost:8081: hello: 123
+Response from host localhost:8080: hello: 123
+Response from host localhost:8082: hello: 123
+Response from host localhost:8081: hello: 123
+Response from host localhost:8080: hello: 123
+Response from host localhost:8080: hello: 123
+Response from host localhost:8082: hello: 123
+Response from host localhost:8080: hello: 123
+Response from host localhost:8082: hello: 123
+Response from host localhost:8082: hello: 123
+```
+
+You can see that, Consistent Hash with Load Bound is far more average!
+
+>   You can change the `loadBoundFactor` for more experiments:
+>
+>   ```go
+>   var (
+>   	// the default number of replicas
+>   	defaultReplicaNum = 10
+>   
+>   	// the load bound factor
+>   	// ref: https://research.googleblog.com/2017/04/consistent-hashing-with-bounded-loads.html
+>   	loadBoundFactor = 0.25
+>   	......
+>   )
+>   ```
+
+<br/>
+
 ## **Reference**
 
 Reference:
