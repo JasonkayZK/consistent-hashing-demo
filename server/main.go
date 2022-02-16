@@ -62,7 +62,7 @@ func kvHandle(w http.ResponseWriter, r *http.Request) {
 
 		time.AfterFunc(time.Duration(expireTime)*time.Second, func() {
 			cache.KvMap.Delete(r.Form["key"][0])
-			fmt.Printf("removed cached key after 3s: {%s: %s}\n", r.Form["key"][0], val)
+			fmt.Printf("removed cached key after 10s: {%s: %s}\n", r.Form["key"][0], val)
 		})
 	}
 
